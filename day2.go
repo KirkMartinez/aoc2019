@@ -22,7 +22,7 @@ func prelimTests() {
 			log.Fatal("Expected " + test.output + " got " + runPart1(test.input, false, 0, 0))
 		}
 	}
-	log.Println("Prelim tests passed.")
+	log.Println("Day 2 prelim tests passed.")
 }
 
 func makeComputer(inst []string) []int {
@@ -80,7 +80,8 @@ func process(computer []int, pc int) {
 func part1() {
 	input := getData(2)
 	result := runPart1(input[0], true, 12, 2)
-	log.Println(result)
+	ops := strings.Split(result, ",")
+	log.Printf("Day 2, part 1 solution: %s\n", ops[0])
 }
 
 func part2() {
@@ -93,7 +94,7 @@ func part2() {
 			result := runPart1(input[0], true, noun, verb)
 			state := strings.Split(result, ",")
 			if state[0] == "19690720" {
-				log.Printf("Found solution.  noun=%d, verb=%d", noun, verb)
+				log.Printf("Day 2, part 2 solution: noun=%d, verb=%d\n", noun, verb)
 				break
 			}
 			input = initialState[:]

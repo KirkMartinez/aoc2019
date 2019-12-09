@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 )
@@ -23,7 +22,7 @@ func prelimTests() {
 	if fuel(100756) != 33583 {
 		log.Fatal("wrong fuel val")
 	}
-	fmt.Println("Prelim tests passed.")
+	log.Println("Day 1 prelim tests passed.")
 }
 
 func part1Fuel(masses []string) int64 {
@@ -44,7 +43,7 @@ func part1() {
 	masses := getData(1)
 
 	totalFuel := part1Fuel(masses)
-	fmt.Println("Part 1 solution: " + strconv.FormatInt(totalFuel, 10))
+	log.Printf("Day 1, part 1 solution: %d\n", totalFuel)
 }
 
 func part2Fuel(masses []string) int64 {
@@ -75,7 +74,7 @@ func part2() {
 
 	total := part2Fuel(masses)
 
-	fmt.Println("Part 2 solution: " + strconv.FormatInt(total, 10))
+	log.Printf("Day 1, part 2 solution: %d\n", total)
 }
 
 func main() {

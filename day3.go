@@ -36,7 +36,7 @@ func part1PrelimTests() {
 			log.Fatal("Stopping.")
 		}
 	}
-	log.Println("Part 1 prelim tests passed.")
+	log.Println("Day 3, part 1 prelim tests passed.")
 }
 
 func part2PrelimTests() {
@@ -60,7 +60,7 @@ func part2PrelimTests() {
 			log.Fatal("Stopping.")
 		}
 	}
-	log.Println("Part 2 Prelim tests passed.")
+	log.Println("Day 3, part 2 prelim tests passed.")
 }
 
 func runPart1(wires []string) int {

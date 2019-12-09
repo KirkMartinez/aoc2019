@@ -24,7 +24,7 @@ func prelimTests() {
 			log.Fatal("Stopping.")
 		}
 	}
-	log.Println("Part 1 prelim tests passed.")
+	log.Println("Day 4 prelim tests passed.")
 }
 
 func meetsCriteria(val string) (result bool) {
