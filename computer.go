@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+type IntComputer struct {
+	inputs, outputs, state []int
+	ip                     int // instruction pointer
+}
+
 type ParamMode int
 
 const (
@@ -14,161 +19,175 @@ const (
 	DIRECT
 )
 
-var input, output int
-
 // Converts a computer state string into a slice of integer opcodes and parameters
-func initComputer(state string, computerInput int) []int {
-	input = computerInput
+func initComputer(state string, ins []int) (computer IntComputer) {
+	computer.inputs = ins
+
+	computer.ip = 0
 
 	inst := strings.Split(state, ",")
-	comp := make([]int, len(inst))
+	computer.state = make([]int, len(inst))
 	for id, item := range inst {
 		opcode, err := strconv.Atoi(item)
 		if err != nil {
 			log.Fatal("Can't convert instruction to int")
 		}
-		comp[id] = opcode
+		computer.state[id] = opcode
 	}
-	return comp
+
+	return computer
 }
 
 // Return current state of computer as a string
-func snapshotComputer(comp []int) (int, string) {
-	strCode := make([]string, len(comp))
-	for id, item := range comp {
+func snapshotComputer(computer IntComputer) (int, string) {
+	strCode := make([]string, len(computer.state))
+	for id, item := range computer.state {
 		strCode[id] = strconv.Itoa(item)
+	}
+
+	var output int
+	if len(computer.outputs) > 0 {
+		output = computer.outputs[0]
 	}
 	return output, strings.Join(strCode, ",")
 }
 
-// Given a computer state and instruction pointer, run the program
-func run(computer []int, pc int) []int {
+// Given a computer, run the program it contains
+func run(computer IntComputer) IntComputer {
 	//log.Printf("In: %d, Out: %d, Computer: %#v", input, output, computer)
-	op := computer[pc]
+	op := computer.state[computer.ip]
 	if op == 99 {
 		return computer
 	}
 
-	nextIP := processOp(op, pc, computer)
+	computer = processOp(op, computer)
+	computer = run(computer)
 
-	updatedState := run(computer, nextIP)
-
-	return updatedState
+	return computer
 }
 
-func opAdd(pm [4]ParamMode, pc int, computer []int) (nextIP int) {
+func opAdd(pm [4]ParamMode, computer IntComputer) IntComputer {
+	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
 	p2 := getParamValue(pm[2], pc+2, computer)
-	pdest := computer[pc+3]
-	nextIP = pc + 4
-	computer[pdest] = p1 + p2
-
-	return
+	pdest := computer.state[pc+3]
+	computer.state[pdest] = p1 + p2
+	computer.ip += 4
+	return computer
 }
 
-func opMult(pm [4]ParamMode, pc int, computer []int) (nextIP int) {
+func opMult(pm [4]ParamMode, computer IntComputer) IntComputer {
+	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
 	p2 := getParamValue(pm[2], pc+2, computer)
-	pdest := computer[pc+3]
-	nextIP = pc + 4
-	computer[pdest] = p1 * p2
-
-	return
+	pdest := computer.state[pc+3]
+	computer.state[pdest] = p1 * p2
+	computer.ip += 4
+	return computer
 }
 
-func opReadInput(pc int, computer []int) (nextIP int) {
-	pdest := computer[pc+1]
-	nextIP = pc + 2
-	computer[pdest] = input
+func opReadInput(computer IntComputer) IntComputer {
+	pc := computer.ip
+	pdest := computer.state[pc+1]
 
-	return
+	// Pop an input value
+	var input int
+	n_inputs := len(computer.inputs)
+	input, computer.inputs = computer.inputs[n_inputs-1], computer.inputs[:n_inputs-1]
+	computer.state[pdest] = input
+	computer.ip += 2
+	return computer
 }
 
-func opWriteOutput(pm [4]ParamMode, pc int, computer []int) (nextIP int) {
+func opWriteOutput(pm [4]ParamMode, computer IntComputer) IntComputer {
+	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
-	nextIP = pc + 2
-	output = p1
-
-	return
+	computer.outputs = append(computer.outputs, p1)
+	computer.ip += 2
+	return computer
 }
 
-func opJumpIfTrue(pm [4]ParamMode, pc int, computer []int) (nextIP int) {
+func opJumpIfTrue(pm [4]ParamMode, computer IntComputer) IntComputer {
+	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
 	p2 := getParamValue(pm[2], pc+2, computer)
 	if p1 != 0 {
-		nextIP = p2
+		computer.ip = p2
 	} else {
-		nextIP = pc + 3
+		computer.ip += 3
 	}
 
-	return
+	return computer
 }
 
-func opJumpIfFalse(pm [4]ParamMode, pc int, computer []int) (nextIP int) {
+func opJumpIfFalse(pm [4]ParamMode, computer IntComputer) IntComputer {
+	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
 	p2 := getParamValue(pm[2], pc+2, computer)
 	if p1 == 0 {
-		nextIP = p2
+		computer.ip = p2
 	} else {
-		nextIP = pc + 3
+		computer.ip += 3
 	}
 
-	return
+	return computer
 }
 
-func opLessThan(pm [4]ParamMode, pc int, computer []int) (nextIP int) {
+func opLessThan(pm [4]ParamMode, computer IntComputer) IntComputer {
+	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
 	p2 := getParamValue(pm[2], pc+2, computer)
-	pdest := computer[pc+3]
+	pdest := computer.state[pc+3]
 	if p1 < p2 {
-		computer[pdest] = 1
+		computer.state[pdest] = 1
 	} else {
-		computer[pdest] = 0
+		computer.state[pdest] = 0
 	}
-	nextIP = pc + 4
+	computer.ip += 4
 
-	return
+	return computer
 }
 
-func opEquals(pm [4]ParamMode, pc int, computer []int) (nextIP int) {
+func opEquals(pm [4]ParamMode, computer IntComputer) IntComputer {
+	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
 	p2 := getParamValue(pm[2], pc+2, computer)
-	pdest := computer[pc+3]
+	pdest := computer.state[pc+3]
 	if p1 == p2 {
-		computer[pdest] = 1
+		computer.state[pdest] = 1
 	} else {
-		computer[pdest] = 0
+		computer.state[pdest] = 0
 	}
-	nextIP = pc + 4
+	computer.ip += 4
 
-	return
+	return computer
 }
 
-func processOp(op, pc int, computer []int) (nextIP int) {
+func processOp(op int, computer IntComputer) IntComputer {
 	opcode, paramModes := decodeOp(op)
 
 	switch opcode {
 	case 1:
-		nextIP = opAdd(paramModes, pc, computer)
+		computer = opAdd(paramModes, computer)
 	case 2:
-		nextIP = opMult(paramModes, pc, computer)
+		computer = opMult(paramModes, computer)
 	case 3:
-		nextIP = opReadInput(pc, computer)
+		computer = opReadInput(computer)
 	case 4:
-		nextIP = opWriteOutput(paramModes, pc, computer)
+		computer = opWriteOutput(paramModes, computer)
 	case 5:
-		nextIP = opJumpIfTrue(paramModes, pc, computer)
+		computer = opJumpIfTrue(paramModes, computer)
 	case 6:
-		nextIP = opJumpIfFalse(paramModes, pc, computer)
+		computer = opJumpIfFalse(paramModes, computer)
 	case 7:
-		nextIP = opLessThan(paramModes, pc, computer)
+		computer = opLessThan(paramModes, computer)
 	case 8:
-		nextIP = opEquals(paramModes, pc, computer)
+		computer = opEquals(paramModes, computer)
 	default:
 		log.Fatal("Unexpected opcode!")
 	}
 
-	return nextIP
+	return computer
 }
 
 func decodeOp(op int) (opcode int, paramModes [4]ParamMode) {
@@ -188,12 +207,12 @@ func decodeOp(op int) (opcode int, paramModes [4]ParamMode) {
 	return
 }
 
-func getParamValue(mode ParamMode, loc int, computer []int) int {
+func getParamValue(mode ParamMode, loc int, computer IntComputer) int {
 	switch mode {
 	case POS:
-		return computer[computer[loc]]
+		return computer.state[computer.state[loc]]
 	case DIRECT:
-		return computer[loc]
+		return computer.state[loc]
 	}
 	log.Fatal("Unknown parameter mode ", mode)
 	return 0

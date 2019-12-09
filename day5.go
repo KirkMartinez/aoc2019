@@ -62,8 +62,8 @@ func prelimTests() {
 }
 
 func runPart1(begState string, input int) (output int, endState string) {
-	computer := initComputer(begState, input)
-	computer = run(computer, 0) // 0 is Instruction pointer
+	computer := initComputer(begState, []int{input})
+	computer = run(computer)
 	output, endState = snapshotComputer(computer)
 	return
 }
