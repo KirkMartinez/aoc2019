@@ -10,6 +10,7 @@ import (
 type IntComputer struct {
 	inputs, outputs, state []int
 	ip                     int // instruction pointer
+	terminated             bool
 }
 
 type ParamMode int
@@ -57,6 +58,7 @@ func run(computer IntComputer) IntComputer {
 	//log.Printf("In: %d, Out: %d, Computer: %#v", input, output, computer)
 	op := computer.state[computer.ip]
 	if op == 99 {
+		computer.terminated = true
 		return computer
 	}
 
@@ -66,11 +68,27 @@ func run(computer IntComputer) IntComputer {
 	return computer
 }
 
+// Given a computer, execute the next instruction
+func runStep(computer IntComputer) IntComputer {
+	op := computer.state[computer.ip]
+	if op == 99 {
+		computer.terminated = true
+		return computer
+	}
+
+	return processOp(op, computer)
+}
+
+func willTerminate(computer IntComputer) bool {
+	return computer.state[computer.ip] == 99
+}
+
 func opAdd(pm [4]ParamMode, computer IntComputer) IntComputer {
 	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
 	p2 := getParamValue(pm[2], pc+2, computer)
 	pdest := computer.state[pc+3]
+	//log.Printf("opAdd %d(@%d) + %d(@%d) into %d\n", p1, pc+1, p2, pc+2, pc+3)
 	computer.state[pdest] = p1 + p2
 	computer.ip += 4
 	return computer
@@ -81,19 +99,26 @@ func opMult(pm [4]ParamMode, computer IntComputer) IntComputer {
 	p1 := getParamValue(pm[1], pc+1, computer)
 	p2 := getParamValue(pm[2], pc+2, computer)
 	pdest := computer.state[pc+3]
+	//log.Printf("opMult %d(@%d) + %d(@%d) into %d\n", p1, pc+1, p2, pc+2, pc+3)
 	computer.state[pdest] = p1 * p2
 	computer.ip += 4
 	return computer
 }
 
 func opReadInput(computer IntComputer) IntComputer {
+	//log.Printf("opReadInput for %#v\n", computer)
 	pc := computer.ip
 	pdest := computer.state[pc+1]
 
-	// Pop an input value
+	// Try to read input
 	var input int
-	n_inputs := len(computer.inputs)
-	input, computer.inputs = computer.inputs[n_inputs-1], computer.inputs[:n_inputs-1]
+	if len(computer.inputs) > 0 {
+		// Pop an input value
+		n_inputs := len(computer.inputs)
+		input, computer.inputs = computer.inputs[n_inputs-1], computer.inputs[:n_inputs-1]
+		//log.Printf("Read input value %d\n", input)
+	}
+
 	computer.state[pdest] = input
 	computer.ip += 2
 	return computer
@@ -102,6 +127,7 @@ func opReadInput(computer IntComputer) IntComputer {
 func opWriteOutput(pm [4]ParamMode, computer IntComputer) IntComputer {
 	pc := computer.ip
 	p1 := getParamValue(pm[1], pc+1, computer)
+	//log.Printf("opWriteOutput: %#v\n", p1)
 	computer.outputs = append(computer.outputs, p1)
 	computer.ip += 2
 	return computer
