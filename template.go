@@ -17,15 +17,15 @@ func prelimTests() {
 		Test{"", 42}}
 	for id, test := range tests {
 		if runPart1(test.input) != test.output {
-			log.Println("Failed test #" + strconv.Itoa(id))
-			log.Fatal("Expected " + test.output + " got " + runPart1(test.input))
+			log.Printf("Expected %d, got %d", test.output, runPart1(test.input))
+			log.Fatal("Failed test #" + strconv.Itoa(id))
 		}
 	}
 	log.Println("Prelim tests passed.")
 }
 
-func runPart1(input string) (result string) {
-	return
+func runPart1(input string) (result int) {
+	return 0
 }
 
 func part1() {

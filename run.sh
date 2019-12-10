@@ -5,4 +5,5 @@
 #go run aocutil.go day4.go
 #go run aocutil.go computer.go day5.go
 #go run aocutil.go day6.go
-go run aocutil.go computer.go day7.go
+#go run aocutil.go day8.go
+go run aocutil.go computer.go day9.go
